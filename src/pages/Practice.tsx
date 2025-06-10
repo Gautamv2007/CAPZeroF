@@ -1,108 +1,74 @@
-
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
-import ChallengeCard from "@/components/ChallengeCard";
-import { Challenge, ChallengeLevel, ChallengeStatus } from "@/utils/types";
+import { Challenge, ChallengeLevel } from "@/utils/types";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 
-// Mock data for challenges
-const challenges: Challenge[] = [
-  {
-    id: "1",
-    title: "Basic Gear Design",
-    description: "Create a simple spur gear with specific tooth profile and dimensions.",
-    instructions: "Design a spur gear with 24 teeth, module 2mm, and pressure angle of 20°.",
-    level: ChallengeLevel.BEGINNER,
-    points: 100,
-    thumbnailUrl: "/placeholder.svg",
-    status: ChallengeStatus.PUBLISHED,
-    creatorId: "org1",
-    createdAt: new Date("2023-01-15"),
-    updatedAt: new Date("2023-01-15"),
-    submissionCount: 876,
-    successRate: 87,
-  },
-  {
-    id: "2",
-    title: "Ergonomic Handle",
-    description: "Design an ergonomic handle for a kitchen utensil that fits comfortably in the hand.",
-    instructions: "Create a handle that fits the human grip with appropriate curves and dimensions.",
-    level: ChallengeLevel.INTERMEDIATE,
-    points: 200,
-    thumbnailUrl: "/placeholder.svg",
-    status: ChallengeStatus.PUBLISHED,
-    creatorId: "org2",
-    createdAt: new Date("2023-02-20"),
-    updatedAt: new Date("2023-02-22"),
-    submissionCount: 542,
-    successRate: 65,
-  },
-  {
-    id: "3",
-    title: "Parametric Bracket Design",
-    description: "Create a fully parameterized corner bracket that can adapt to different load requirements.",
-    instructions: "Design a bracket that can be adjusted through parameters for different applications.",
-    level: ChallengeLevel.ADVANCED,
-    points: 300,
-    thumbnailUrl: "/placeholder.svg",
-    status: ChallengeStatus.PUBLISHED,
-    creatorId: "org1",
-    createdAt: new Date("2023-03-10"),
-    updatedAt: new Date("2023-03-15"),
-    submissionCount: 315,
-    successRate: 42,
-  },
-  {
-    id: "4",
-    title: "Phone Stand",
-    description: "Create a compact and foldable phone stand that can be 3D printed.",
-    instructions: "Design a phone stand that can be folded flat and 3D printed without supports.",
-    level: ChallengeLevel.BEGINNER,
-    points: 100,
-    thumbnailUrl: "/placeholder.svg",
-    status: ChallengeStatus.PUBLISHED,
-    creatorId: "org2",
-    createdAt: new Date("2023-03-05"),
-    updatedAt: new Date("2023-03-05"),
-    submissionCount: 723,
-    successRate: 91,
-  },
-  {
-    id: "5",
-    title: "Adjustable Desk Lamp",
-    description: "Design an adjustable desk lamp with multiple pivot points.",
-    instructions: "Create a desk lamp with at least 3 adjustable joints and stable base.",
-    level: ChallengeLevel.INTERMEDIATE,
-    points: 200,
-    thumbnailUrl: "/placeholder.svg",
-    status: ChallengeStatus.PUBLISHED,
-    creatorId: "org1",
-    createdAt: new Date("2023-04-01"),
-    updatedAt: new Date("2023-04-03"),
-    submissionCount: 412,
-    successRate: 63,
-  },
-  {
-    id: "6",
-    title: "Drone Frame Design",
-    description: "Design a lightweight but durable frame for a quadcopter drone.",
-    instructions: "Create a drone frame that balances weight, strength, and ease of assembly.",
-    level: ChallengeLevel.ADVANCED,
-    points: 250,
-    thumbnailUrl: "/placeholder.svg",
-    status: ChallengeStatus.PUBLISHED,
-    creatorId: "org3",
-    createdAt: new Date("2023-04-12"),
-    updatedAt: new Date("2023-04-15"),
-    submissionCount: 278,
-    successRate: 51,
-  },
-];
-
 const Practice = () => {
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [filters, setFilters] = useState({
+    level: 'all',
+    sort: 'newest',
+    search: ''
+  });
+
+  useEffect(() => {
+    const fetchChallenges = async () => {
+  try {
+    setLoading(true);
+    const response = await axios.get(`http://localhost:5000/api/challenges`, {
+      params: filters,
+      timeout: 5000 // 5 second timeout
+    });
+    setChallenges(response.data);
+  } catch (err) {
+    console.error('Detailed error:', err);
+    setError(`Failed to fetch challenges: ${err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
+    fetchChallenges();
+  }, [filters]);
+
+  const handleFilterChange = (name: string, value: string) => {
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-grow bg-gray-50 dark:bg-gray-900">
+          <div className="container py-8 flex justify-center items-center h-64">
+            <div>Loading challenges...</div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-grow bg-gray-50 dark:bg-gray-900">
+          <div className="container py-8 flex justify-center items-center h-64">
+            <div className="text-red-500">{error}</div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -118,7 +84,10 @@ const Practice = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
               <div className="w-full sm:w-64">
-                <Select defaultValue="all">
+                <Select 
+                  value={filters.level}
+                  onValueChange={(value) => handleFilterChange('level', value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Filter by difficulty" />
                   </SelectTrigger>
@@ -134,7 +103,10 @@ const Practice = () => {
                 </Select>
               </div>
               <div className="w-full sm:w-64">
-                <Select defaultValue="newest">
+                <Select 
+                  value={filters.sort}
+                  onValueChange={(value) => handleFilterChange('sort', value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
@@ -154,6 +126,8 @@ const Practice = () => {
                 type="search"
                 placeholder="Search challenges..."
                 className="pr-10"
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
@@ -172,6 +146,9 @@ const Practice = () => {
                     src={challenge.thumbnailUrl} 
                     alt={challenge.title}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder.svg';
+                    }}
                   />
                   <div className="absolute top-2 left-2">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${
@@ -211,9 +188,11 @@ const Practice = () => {
             ))}
           </div>
 
-          <div className="flex justify-center">
-            <Button variant="outline">Load More Challenges</Button>
-          </div>
+          {challenges.length > 0 && (
+            <div className="flex justify-center">
+              <Button variant="outline">Load More Challenges</Button>
+            </div>
+          )}
         </div>
       </main>
       <Footer />
